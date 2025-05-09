@@ -292,9 +292,8 @@ impl Tetrahedralization {
         let ext_tet = self.get_tet_as_extended(tet_idx)?;
 
         let in_sphere = match ext_tet {
-            // TODO: why do we need to invert gp's in sphere, compared to robust's, they should have the same signs for the same cases
             ExtendedTetrahedron::Tetrahedron([a, b, c, d]) => {
-                -gp::in_sphere_3d_SOS(&a, &b, &c, &d, &p)
+                gp::in_sphere_3d_sos::<true>(&a, &b, &c, &d, &p)
             }
             ExtendedTetrahedron::Triangle([a, b, c]) => -gp::orient_3d(&a, &b, &c, &p),
         };
@@ -321,7 +320,7 @@ impl Tetrahedralization {
                     .nodes()
                     .map(|n| self.height(n.idx().unwrap()));
 
-                gp::orient_3dlifted_SOS(&a, &b, &c, &d, &p, h_a, h_b, h_c, h_d, h_p)
+                gp::orient_3dlifted_sos(&a, &b, &c, &d, &p, [h_a, h_b, h_c, h_d, h_p])
             }
             // if the triangle is a line segment, then the power sphere is a sphere with infinite radius and we can use a orientation test
             ExtendedTetrahedron::Triangle([a, b, c]) => -gp::orient_3d(&a, &b, &c, &p),
@@ -354,7 +353,7 @@ impl Tetrahedralization {
                     .map(|n| self.height(n.idx().unwrap()));
 
                 let in_eps_circle =
-                    gp::orient_3dlifted_SOS(&a, &b, &c, &d, &p, h_a, h_b, h_c, h_d, h_p);
+                    gp::orient_3dlifted_sos(&a, &b, &c, &d, &p, [h_a, h_b, h_c, h_d, h_p]);
 
                 Ok(in_eps_circle > 0)
             }
@@ -569,7 +568,7 @@ impl Tetrahedralization {
 
                     let orientation = -gp::orient_3d(&v0, &v1, &v2, &v3);
 
-                    match orientation.cmp(&0) {
+                    match orientation.cmp(&geogram_predicates::Sign::Zero) {
                         cmp::Ordering::Greater => {
                             self.tds.insert_first_tet([idx0, idx1, idx2, idx3])?
                         }
@@ -827,7 +826,7 @@ impl Tetrahedralization {
                             .nodes()
                             .map(|n| self.height(n.idx().unwrap()));
 
-                        gp::orient_3dlifted_SOS(&a, &b, &c, &d, v, h_a, h_b, h_c, h_d, h_v)
+                        gp::orient_3dlifted_sos(&a, &b, &c, &d, v, [h_a, h_b, h_c, h_d, h_v])
                     }
                     // if the triangle is a line segment, then the power sphere is a sphere with infinite radius and we can use a orientation test
                     ExtendedTetrahedron::Triangle([a, b, c]) => -gp::orient_3d(&a, &b, &c, v),

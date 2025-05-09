@@ -276,7 +276,7 @@ impl Triangulation {
                     let orientation = gp::orient_2d(&v0, &v1, &v2);
 
                     // insert the triangle in ccw order, or if aligned, find another point to build the starting triangle
-                    match orientation.cmp(&0) {
+                    match orientation.cmp(&geogram_predicates::Sign::Zero) {
                         cmp::Ordering::Greater => {
                             self.tds_mut().add_init_tri([idx0, idx1, idx2])?
                         }
@@ -533,7 +533,7 @@ impl Triangulation {
                     .nodes()
                     .map(|n| self.height(n.idx().unwrap()));
 
-                gp::orient_2dlifted_SOS(&a, &b, &c, &p, h_a, h_b, h_c, h_p)
+                gp::orient_2dlifted_sos(&a, &b, &c, &p, [h_a, h_b, h_c, h_p])
             }
             // if the triangle is a line segment, then the power circle is a circle with infinite radius and we can use an orientation test
             TriangleExtended::ConceptualTriangle(tri_idxs) => {
@@ -564,7 +564,7 @@ impl Triangulation {
                     .nodes()
                     .map(|n| self.height(n.idx().unwrap()));
 
-                let in_eps_circle = gp::orient_2dlifted_SOS(&a, &b, &c, &p, h_a, h_b, h_c, h_p);
+                let in_eps_circle = gp::orient_2dlifted_sos(&a, &b, &c, &p, [h_a, h_b, h_c, h_p]);
 
                 HowOk(in_eps_circle > 0)
             }
@@ -584,12 +584,8 @@ impl Triangulation {
 
         for tri_idx in 0..self.tds().num_tris() + self.tds().num_deleted_tris {
             // Skip triangles that have been deleted by 3->1 flips
-            if self
-                .tds()
-                .get_tri(tri_idx)?
-                .nodes()
-                .contains(&VertexNode::Deleted)
-            {
+            if self.tds().get_tri(tri_idx)?
+            .nodes().contains(&VertexNode::Deleted) {
                 continue;
             }
 
@@ -780,7 +776,7 @@ impl Triangulation {
                             .nodes()
                             .map(|n| self.height(n.idx().unwrap()));
 
-                        gp::orient_2dlifted_SOS(&a, &b, &c, v, h_a, h_b, h_c, h_v)
+                        gp::orient_2dlifted_sos(&a, &b, &c, v, [h_a, h_b, h_c, h_v])
                     }
                     // if the triangle is a line segment, then the power circle is a circle with infinite radius and we can use an orientation test
                     TriangleExtended::ConceptualTriangle(tri_idxs) => {
